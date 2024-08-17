@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "132020592028",
+    "project_id": "fpcanew",
+    "storage_bucket": "fpcanew.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:132020592028:android:25692fb5d9209235dbfc59",
+        "android_client_info": {
+          "package_name": "com.awesomeproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChdTcetDfZM-4ukcQhaRkJmiDcY-8pYTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
