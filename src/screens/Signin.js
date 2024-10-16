@@ -10,23 +10,20 @@ export default function Signin({ navigation }) {
 
   const handleSignin = async () => {
     try {
-      // Sign in with email and password
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
-      // Fetch user role from Firestore
       const userDoc = await firestore().collection('users').doc(user.uid).get();
       if (userDoc.exists) {
         const userData = userDoc.data();
         const role = userData?.role || null;
 
-        // Navigate to the appropriate tabs based on the role
         if (role === 'admin') {
-          navigation.replace('AdminScreen');  // Navigate to AdminScreen if the user is an admin
+          navigation.replace('AdminScreen');
         } else if (role === 'faculty') {
-          navigation.replace('FacultyTabs');  // Navigate to FacultyTabs if the user is a faculty member
+          navigation.replace('FacultyTabs');
         } else if (role === 'parent') {
-          navigation.replace('ParentTabs');  // Navigate to ParentTabs if the user is a parent
+          navigation.replace('ParentTabs');
         } else {
           setError('Unknown role. Please contact support.');
         }
@@ -48,6 +45,7 @@ export default function Signin({ navigation }) {
 
         <TextInput
           placeholder="Email ID"
+          placeholderTextColor="#B08968"  // Set the placeholder color to brown
           style={styles.input}
           keyboardType="email-address"
           value={email}
@@ -55,6 +53,7 @@ export default function Signin({ navigation }) {
         />
         <TextInput
           placeholder="Password"
+          placeholderTextColor="#B08968"  // Set the placeholder color to brown
           style={styles.input}
           secureTextEntry
           value={password}
@@ -89,66 +88,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   inputContainer: {
-    backgroundColor: '#F7F7FC',
-    padding: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 5,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+    marginBottom: 5,
     color: '#000',
-    marginBottom: 10,
-    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#555',
+    color: '#7D7D7D',
     marginBottom: 30,
-    textAlign: 'center',
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
+    backgroundColor: '#F7F7FC',
     borderRadius: 8,
-    paddingHorizontal: 10,
+    padding: 15,
     marginBottom: 15,
-    backgroundColor: '#f7f7f7',
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    marginBottom: 20,
-  },
-  registerText: {
     fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  registerLink: {
-    color: '#c79b6d',
-    fontWeight: 'bold',
+    borderWidth: 0,
+    color: '#000', // Ensure the text color is visible
   },
   button: {
-    backgroundColor: '#b38b67',
+    backgroundColor: '#B08968',
     paddingVertical: 15,
-    borderRadius: 8,
+    borderRadius: 25,
+    marginTop: 20,
     alignItems: 'center',
+    width: '100%',
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  registerText: {
+    marginTop: 15,
+    textAlign: 'center',
+    color: '#7D7D7D',
+  },
+  registerLink: {
+    color: '#B08968',
+    fontWeight: '600',
   },
   errorText: {
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    marginVertical: 20,
   },
 });

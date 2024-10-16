@@ -20,7 +20,7 @@ export default function AdminTabs() {
             iconName = 'account';
           } else if (route.name === 'Remove User') {
             iconName = 'account-remove';
-          } else if (route.name === 'Requests') {
+          } else if (route.name === 'Requests For Faculty') {
             iconName = 'bell';
           } else if (route.name === 'Logout') {
             iconName = 'logout';
@@ -52,7 +52,7 @@ export default function AdminTabs() {
     >
       <Tab.Screen name="Users" component={UserListScreen} />
       <Tab.Screen name="Remove User" component={RemoveUserScreen} />
-      <Tab.Screen name="Requests" component={RequestScreen} />
+      <Tab.Screen name="Requests For Faculty" component={RequestScreen} />
       <Tab.Screen name="Logout" component={LogoutAdmin} />
     </Tab.Navigator>
   );

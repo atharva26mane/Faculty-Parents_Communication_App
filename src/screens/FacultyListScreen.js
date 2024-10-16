@@ -14,10 +14,6 @@ export default function FacultyListScreen({ navigation }) {
       try {
         const facultyData = await firestore().collection('users').where('role', '==', 'faculty').get();
         const fetchedData = facultyData.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Log the fetched data to ensure it contains the expected results
-        console.log("Fetched Faculty Data:", fetchedData);
-        
         setFacultyList(fetchedData);
       } catch (error) {
         setError("Error fetching faculty data");
@@ -31,7 +27,6 @@ export default function FacultyListScreen({ navigation }) {
   }, []);
 
   const navigateToChat = (faculty) => {
-    console.log('Navigating to ChatScreen with:', faculty); // Debug log
     navigation.navigate('ChatScreen', { faculty });
   };
 
@@ -66,7 +61,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ddd',
   },
   text: {
-    color: 'black', // Updated text color
+    color: 'black',
   },
   error: {
     color: 'red',

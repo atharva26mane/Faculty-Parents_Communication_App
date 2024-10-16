@@ -29,14 +29,14 @@ export default function ParentRegistration({ navigation }) {
   };
 
   // Function to upload image to Firebase Storage and get the download URL
-  const uploadImage = async () => {
+  const uploadImage = async (userId) => {
     if (profilePhoto == null) {
       Alert.alert('Please select a profile photo.');
       return null;
     }
 
     const fileName = profilePhoto.substring(profilePhoto.lastIndexOf('/') + 1);
-    const storageRef = storage().ref(`profile_photos/${fileName}`);
+    const storageRef = storage().ref(`profilePhotos/${userId}/${fileName}`);
 
     setUploading(true);
     try {
@@ -75,14 +75,14 @@ export default function ParentRegistration({ navigation }) {
 
   // Handle Save Button Press
   const handleSave = async () => {
-    // First upload the profile photo
-    const imageUrl = await uploadImage();
-    if (!imageUrl) return;
-
     try {
       // Create the user account using Firebase auth
       const userCredential = await auth().createUserWithEmailAndPassword(studentEmail, password);
       const uid = userCredential.user.uid;
+
+      // Upload the profile photo and get the URL
+      const imageUrl = await uploadImage(uid);
+      if (!imageUrl) return;
 
       // Save the user data in Firestore
       await saveData(uid, imageUrl);

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker'; // For image picker
+import { launchImageLibrary } from 'react-native-image-picker';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import storage from '@react-native-firebase/storage';
 
 const FacultyRegistration = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -25,6 +26,25 @@ const FacultyRegistration = ({ navigation }) => {
     });
   };
 
+  // Function to upload image to Firebase Storage
+  const uploadImageToStorage = async (uri, userId) => {
+    if (!uri) return null;
+
+    const fileName = uri.substring(uri.lastIndexOf('/') + 1);
+    const storageRef = storage().ref(`profilePhotos/${userId}/${fileName}`);
+
+    const uploadTask = storageRef.putFile(uri);
+
+    try {
+      await uploadTask;
+      const downloadURL = await storageRef.getDownloadURL();
+      return downloadURL;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      return null;
+    }
+  };
+
   const handleRegister = async () => {
     if (name && email && password) {
       setLoading(true);
@@ -32,11 +52,14 @@ const FacultyRegistration = ({ navigation }) => {
         const userCredential = await auth().createUserWithEmailAndPassword(email, password);
         const userId = userCredential.user.uid;
 
+        // Upload the profile photo to Firebase Storage
+        const profilePhotoURL = await uploadImageToStorage(profilePhoto, userId);
+
         // Save user data as pending faculty
         await firestore().collection('facultyRequests').doc(userId).set({
           name,
           email,
-          profilePhoto, // Save profile photo URI if needed
+          profilePhoto: profilePhotoURL, // Save the download URL of the profile photo
           status: 'pending', // Mark as pending approval
           userId,
         });
@@ -52,6 +75,7 @@ const FacultyRegistration = ({ navigation }) => {
         // Navigate to the waiting screen
         navigation.navigate('WaitingScreen');
       } catch (error) {
+        console.error('Registration Error:', error);
         Alert.alert('Registration Error', error.message);
       } finally {
         setLoading(false);

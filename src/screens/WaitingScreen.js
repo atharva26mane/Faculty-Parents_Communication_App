@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, BackHandler } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, BackHandler, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { useFocusEffect } from '@react-navigation/native';
@@ -8,32 +8,22 @@ const WaitingScreen = ({ navigation }) => {
   const [isCheckingRole, setIsCheckingRole] = useState(true);
 
   useEffect(() => {
-    const checkFacultyRole = async () => {
-      try {
-        const userId = auth().currentUser.uid;
-        const userDoc = await firestore().collection('users').doc(userId).get();
-
-        if (userDoc.exists && userDoc.data().role === 'faculty') {
-          // If user role is faculty, navigate to FacultyTabs
-          navigation.navigate('FacultyTabs');
-        } else {
-          // Continue checking until the user is accepted as faculty
-          setIsCheckingRole(false);
+    const userId = auth().currentUser.uid;
+    const unsubscribe = firestore()
+      .collection('facultyRequests')
+      .doc(userId)
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.status === 'approved') {
+            navigation.navigate('FacultyTabs');
+          }
         }
-      } catch (error) {
-        console.error('Error checking user role:', error);
-      }
-    };
+      });
 
-    // Poll every 5 seconds to check if the role has been updated
-    const intervalId = setInterval(() => {
-      checkFacultyRole();
-    }, 5000);
-
-    return () => clearInterval(intervalId); // Cleanup the interval on component unmount
+    return () => unsubscribe(); // Cleanup on unmount
   }, [navigation]);
 
-  // Handle back button press to navigate to Signin screen
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -52,7 +42,10 @@ const WaitingScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.message}>Please wait, your faculty request is under review.</Text>
-      {isCheckingRole && <ActivityIndicator size="large" color="#AF8F6F" />}
+      <ActivityIndicator size="large" color="#AF8F6F" />
+      <TouchableOpacity onPress={() => navigation.navigate('AdminRequestsScreen')}>
+        <Text>Go to Admin Requests</Text>
+      </TouchableOpacity>
     </View>
   );
 };

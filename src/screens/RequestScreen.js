@@ -1,98 +1,100 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList, ActivityIndicator } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 
-const RequestScreen = () => {
+const RequestScreen = ({ navigation }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const snapshot = await firestore().collection('facultyRequests').where('status', '==', 'pending').get();
-        const fetchedRequests = snapshot.docs.map(doc => ({
+    const unsubscribe = firestore().collection('facultyRequests')
+      .onSnapshot(snapshot => {
+        const newRequests = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setRequests(fetchedRequests);
-      } catch (error) {
-        console.error('Error fetching faculty requests:', error);
-      } finally {
+        setRequests(newRequests);
         setLoading(false);
-      }
-    };
+      }, error => {
+        console.error("Error fetching requests: ", error);
+        setLoading(false);
+      });
 
-    fetchRequests();
+    return () => unsubscribe();
   }, []);
 
-  const handleAccept = async (id, userId) => {
+  const handleAccept = async (request) => {
     try {
-      // Update the status of the request in Firestore
-      await firestore().collection('facultyRequests').doc(id).update({ status: 'accepted' });
+      // Add the user to the "users" collection
+      await firestore().collection('users').doc(request.id).set({
+        name: request.name,
+        email: request.email,
+        profilePhoto: request.profilePhoto,
+        role: 'faculty', // Set the role as 'faculty'
+      });
 
-      // Update the role of the user in the 'users' collection to 'faculty'
-      await firestore().collection('users').doc(userId).update({ role: 'faculty' });
+      // Remove the user from the "facultyRequests" collection
+      await firestore().collection('facultyRequests').doc(request.id).delete();
 
-      console.log(`Accepted request from user ID: ${id} and updated role to faculty`);
+      console.log("Accepted:", request.name);
 
-      // Remove the accepted request from the state
-      setRequests(prev => prev.filter(request => request.id !== id));
+      // Update the local state to remove the accepted request
+      setRequests(requests.filter(req => req.id !== request.id));
     } catch (error) {
-      console.error('Error accepting request:', error);
+      console.error("Error accepting request: ", error);
     }
   };
 
-  const handleRemove = async (id) => {
+  const handleRemove = async (request) => {
     try {
-      // Remove the request from Firestore
-      await firestore().collection('facultyRequests').doc(id).delete();
+      // Remove the user from the "facultyRequests" collection
+      await firestore().collection('facultyRequests').doc(request.id).delete();
 
-      console.log(`Removed request from user ID: ${id}`);
+      console.log("Removed:", request.name);
 
-      // Remove the deleted request from the state
-      setRequests(prev => prev.filter(request => request.id !== id));
+      // Update the local state to remove the removed request
+      setRequests(requests.filter(req => req.id !== request.id));
     } catch (error) {
-      console.error('Error removing request:', error);
+      console.error("Error removing request: ", error);
     }
   };
 
-  const renderRequestItem = ({ item }) => (
-    <View style={styles.requestCard}>
-      <Image
-        style={styles.profileImage}
-        source={{ uri: item.profilePhoto || 'https://via.placeholder.com/100' }} // Use profile photo if available
-      />
-      <View style={styles.requestContent}>
-        <Text style={styles.userName}>{item.name}</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.acceptButton}
-            onPress={() => handleAccept(item.id, item.userId)} // Pass userId to update their role
-          >
-            <Text style={styles.buttonText}>Accept</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={() => handleRemove(item.id)}
-          >
-            <Text style={styles.removeButtonText}>Remove</Text>
-          </TouchableOpacity>
-        </View>
+  const renderItem = ({ item }) => (
+    <View style={styles.requestContainer}>
+      <View style={styles.profileContainer}>
+        <Image 
+          source={{ uri: item.profilePhoto }} 
+          style={styles.profileImage} 
+          defaultSource={require('../assets/default_profile.png')} // Fallback image
+        />
+        <Text style={styles.name}>{item.name}</Text>
+      </View>
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity
+          style={styles.acceptButton}
+          onPress={() => handleAccept(item)}
+        >
+          <Text style={styles.buttonText}>Accept</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => handleRemove(item)}
+        >
+          <Text style={styles.buttonText}>Remove</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>Requests For Faculty</Text>
       {loading ? (
-        <ActivityIndicator size="large" color="#AF8F6F" />
+        <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <FlatList
           data={requests}
-          renderItem={renderRequestItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={<Text style={styles.emptyText}>No pending requests at the moment.</Text>}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
         />
       )}
     </View>
@@ -103,66 +105,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    padding: 20,
   },
-  headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    alignSelf: 'center',
-    marginVertical: 20,
-  },
-  requestCard: {
+  requestContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginVertical: 10,
-    padding: 10,
-    backgroundColor: '#F7F7F7',
-    borderRadius: 10,
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    paddingBottom: 15,
+    justifyContent: 'space-between',
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#E0E0E0',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#e3e3e3',
+    marginRight: 15,
   },
-  requestContent: {
-    flex: 1,
-    marginLeft: 20,
+  name: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
   },
-  userName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  buttonContainer: {
+  buttonsContainer: {
     flexDirection: 'row',
-    marginTop: 10,
+    alignItems: 'center',
   },
   acceptButton: {
-    backgroundColor: '#B08968',  // Brown color
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginRight: 10,
+    backgroundColor: '#B0875B',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    marginHorizontal: 8,
   },
   removeButton: {
-    backgroundColor: '#F2F2F2',  // Light gray color
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    marginHorizontal: 8,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#000',
     fontWeight: '600',
-  },
-  removeButtonText: {
-    color: '#4A4A4A',
-    fontWeight: '600',
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 20,
     fontSize: 16,
-    color: '#7D7D7D',
   },
 });
 

@@ -9,7 +9,7 @@ export default function LogoutAdmin() {
   const handleLogout = async () => {
     try {
       await auth().signOut(); // Sign out the user
-      navigation.replace('Signin'); // Navigate to the SignIn screen
+      navigation.navigate('Signin'); // Navigate to the SignIn screen
     } catch (error) {
       console.error('Failed to log out:', error);
     }

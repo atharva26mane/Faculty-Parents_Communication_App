@@ -1,18 +1,23 @@
-// src/screens/FacultyTabs.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import ChatsScreen from './ChatsScreen'; // Make sure this component exists
-import GroupsScreen from './GroupsScreen'; // Make sure this component exists
-import RequestsScreen from './RequestScreen'; // Make sure this component exists
+import ChatsScreen from './ChatsScreen';
+import RequestScreen from './RequestScreen';
+import AnnouncementsScreen from './AnnouncementsScreen';
+import FLogoutScreen from './FLogoutScreen';
+import GroupChatNavigator from './GroupChatNavigator';
 
 const Tab = createBottomTabNavigator();
 
-const FacultyTabs = () => {
+const FacultyTabs = ({ userRole }) => {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Chats" component={ChatsScreen} />
-      <Tab.Screen name="Groups" component={GroupsScreen} />
-      <Tab.Screen name="Requests" component={RequestsScreen} />
+      <Tab.Screen name="Groups">
+        {(props) => <GroupChatNavigator {...props} role={userRole} />}
+      </Tab.Screen>
+      <Tab.Screen name="Requests For Faculty" component={RequestScreen} />
+      <Tab.Screen name="Announcements" component={AnnouncementsScreen} />
+      <Tab.Screen name="Logout" component={FLogoutScreen} />
     </Tab.Navigator>
   );
 };
